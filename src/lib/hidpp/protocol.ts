@@ -119,7 +119,11 @@ export async function determineVersion(
 ): Promise<VersionInfo | null> {
   const softwareId = channel.nextSwId();
   const header2 = (0x1 << 4) | (softwareId & 0x0f);
-  const data = new Uint8Array(SHORT_PAYLOAD_LEN);
+  // A BLE-direct device (e.g. Pebble M350s) exposes only the long report, so the
+  // ping must go out as long too — same header offsets, zero-padded payload.
+  const useLong = !channel.supportsShort && channel.supportsLong;
+  const reportId = useLong ? LONG_REPORT_ID : SHORT_REPORT_ID;
+  const data = new Uint8Array(useLong ? LONG_PAYLOAD_LEN : SHORT_PAYLOAD_LEN);
   data[0] = deviceIndex;
   data[1] = 0x00;
   data[2] = header2;
@@ -138,7 +142,7 @@ export async function determineVersion(
   let response: RawReport;
   try {
     response = await channel.sendRaw(
-      SHORT_REPORT_ID,
+      reportId,
       data,
       (r) => isV20(r.data) || isV10Error(r.data),
     );
