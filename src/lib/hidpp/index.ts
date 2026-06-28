@@ -53,3 +53,8 @@ export {
   type SmartShiftEnhancedChange,
 } from "./features/smartshift-enhanced";
 export { ReportRateFeature } from "./features/report-rate";
+export {
+  HostsInfoFeature,
+  type HostsInfo,
+  type HostSlot,
+} from "./features/hosts-info";

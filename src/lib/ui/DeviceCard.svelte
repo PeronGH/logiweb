@@ -3,6 +3,7 @@
   import Unplug from "@lucide/svelte/icons/unplug";
   import {
     AdjustableDpiFeature,
+    HostsInfoFeature,
     ReportRateFeature,
     SmartShiftFeature,
     UnifiedBatteryFeature,
@@ -10,6 +11,7 @@
   import { deviceStore, type ManagedDevice } from "./device-store.svelte";
   import BatteryPanel from "./panels/BatteryPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
+  import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
   import SmartShiftPanel from "./panels/SmartShiftPanel.svelte";
 
@@ -64,6 +66,9 @@
     {/if}
     {#if device.supports(ReportRateFeature)}
       <ReportRatePanel {device} />
+    {/if}
+    {#if device.supports(HostsInfoFeature)}
+      <HostsPanel {device} />
     {/if}
   </dl>
 </section>
