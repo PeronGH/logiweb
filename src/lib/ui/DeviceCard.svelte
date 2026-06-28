@@ -3,6 +3,8 @@
   import {
     AdjustableDpiFeature,
     DeviceInformationFeature,
+    ExtendedReportRateFeature,
+    FnInversionFeature,
     HostsInfoFeature,
     ReportRateFeature,
     ReprogControlsFeature,
@@ -15,6 +17,8 @@
   import ButtonsPanel from "./panels/ButtonsPanel.svelte";
   import DeviceInfoPanel from "./panels/DeviceInfoPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
+  import ExtendedReportRatePanel from "./panels/ExtendedReportRatePanel.svelte";
+  import FnInversionPanel from "./panels/FnInversionPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
   import SmartShiftPanel from "./panels/SmartShiftPanel.svelte";
@@ -62,8 +66,14 @@
     {#if device.supports(ReportRateFeature)}
       <ReportRatePanel {device} />
     {/if}
+    {#if device.supports(ExtendedReportRateFeature)}
+      <ExtendedReportRatePanel {device} />
+    {/if}
     {#if device.supports(HostsInfoFeature)}
       <HostsPanel {device} />
+    {/if}
+    {#if device.supports(FnInversionFeature)}
+      <FnInversionPanel {device} />
     {/if}
     {#if device.supports(ReprogControlsFeature)}
       <ButtonsPanel {device} />

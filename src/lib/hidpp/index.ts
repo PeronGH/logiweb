@@ -59,6 +59,8 @@ export {
   type SmartShiftEnhancedChange,
 } from "./features/smartshift-enhanced";
 export { ReportRateFeature } from "./features/report-rate";
+export { ExtendedReportRateFeature } from "./features/extended-report-rate";
+export { FnInversionFeature } from "./features/fn-inversion";
 export {
   HostsInfoFeature,
   type HostsInfo,
