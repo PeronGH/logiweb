@@ -13,6 +13,11 @@ export {
   getGrantedLogitechDevices,
   LOGITECH_VENDOR_ID,
 } from "./webhid";
+export {
+  isReceiver,
+  enumeratePairedDevices,
+  type PairedDevice,
+} from "./receiver";
 
 export { RootFeature, type RootFeatureInfo } from "./features/root";
 export {
