@@ -34,6 +34,29 @@ interface Pending {
   timer: ReturnType<typeof setTimeout>;
 }
 
+/**
+ * Whether a device exposes a HID++ report (`0x10`/`0x11`). A receiver enumerates
+ * several HID interfaces — boot keyboard/mouse, consumer, and the HID++ vendor
+ * collection; only the last carries these reports. `collections` is populated at
+ * enumeration, so this filters the non-HID++ interfaces before opening them.
+ */
+export function exposesHidpp(device: HIDDevice): boolean {
+  for (const collection of device.collections) {
+    const reports = [
+      ...(collection.inputReports ?? []),
+      ...(collection.outputReports ?? []),
+    ];
+    if (
+      reports.some(
+        (r) => r.reportId === SHORT_REPORT_ID || r.reportId === LONG_REPORT_ID,
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export class HidppChannel {
   readonly device: HIDDevice;
   /** Whether the device exposes the short (`0x10`) HID++ report. */

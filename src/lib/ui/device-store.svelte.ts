@@ -4,6 +4,7 @@ import {
   DeviceTypeAndNameFeature,
   HidppChannel,
   HidppDevice,
+  exposesHidpp,
   getGrantedLogitechDevices,
   isWebHidSupported,
   receiverKind,
@@ -145,6 +146,10 @@ class DeviceStore {
   }
 
   async #attach(hid: HIDDevice): Promise<void> {
+    // A receiver exposes several HID interfaces; skip the non-HID++ ones (boot
+    // keyboard/mouse, consumer) silently rather than reporting them as errors.
+    if (!exposesHidpp(hid)) return;
+
     const channelKey = channelKeyOf(hid);
     if (this.#channels.has(channelKey)) return;
 

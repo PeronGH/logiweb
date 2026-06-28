@@ -1,4 +1,9 @@
-export { HidppChannel, type RawReport, type ReportListener } from "./channel";
+export {
+  HidppChannel,
+  exposesHidpp,
+  type RawReport,
+  type ReportListener,
+} from "./channel";
 export { HidppDevice, type FeatureCtor } from "./device";
 export { HidppError, HidppErrorCode, errorCodeName } from "./errors";
 export {
