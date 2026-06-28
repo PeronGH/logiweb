@@ -12,6 +12,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
+    "@types/w3c-web-hid": "^1.0.7",
     "bun-plugin-svelte": "^0.0.6",
     "bun-plugin-tailwind": "^0.1.2",
     "eslint": "^10.6.0",

@@ -1,6 +1,10 @@
-# bun-svelte-spa
+# logi-web
 
-A pure-frontend [Svelte 5](https://svelte.dev) single-page app bundled by [Bun](https://bun.com), styled with [Tailwind CSS v4](https://tailwindcss.com). Uses the official [`bun-plugin-svelte`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-svelte) and [`bun-plugin-tailwind`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-tailwind). No Vite.
+A pure-frontend [Svelte 5](https://svelte.dev) single-page app that configures Logitech HID++ devices directly from the browser over [WebHID](https://wicg.github.io/webhid/) — DPI, SmartShift, report rate, and battery, with no native app or driver. Bundled by [Bun](https://bun.com), styled with [Tailwind CSS v4](https://tailwindcss.com), using the official [`bun-plugin-svelte`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-svelte) and [`bun-plugin-tailwind`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-tailwind). No Vite.
+
+The HID++ protocol layer lives in `src/lib/hidpp/` as a frontend-agnostic TypeScript core: a `HidppChannel` over WebHID plus a catalog of feature wrappers. The wire format (feature ids, function indices, byte layouts, quirks like the DPI range-marker encoding) is reverse-engineered from the [OpenLogi](https://github.com/AprilNEA/OpenLogi) Rust project.
+
+**Requirements:** a Chromium-based browser (Chrome, Edge — WebHID is not in Firefox or Safari), served over HTTPS or `localhost`. This first cut talks to directly-connected devices (USB-wired or Bluetooth-direct, device index `0xFF`); devices behind a Bolt/Unifying receiver need receiver enumeration, which is the next step (the HID++ 1.0 register primitives it builds on are already in `channel.ts`).
 
 ## Usage
 
@@ -18,8 +22,8 @@ bun run format   # prettier --write
 - `index.html` — entry point; loads `src/main.ts` as a module.
 - `src/main.ts` — mounts the Svelte app and wires up HMR.
 - `src/app.css` — Tailwind entry (`@import "tailwindcss";`).
-- `src/App.svelte` — root component.
-- `src/lib/` — components.
+- `src/App.svelte` — root component; a demo console that lists connected devices and exposes their settings.
+- `src/lib/hidpp/` — the frontend-agnostic HID++ core: `channel.ts` (WebHID transport), `protocol.ts` (HID++ 2.0 framing + version detection), `device.ts` (feature enumeration), and `features/` (one wrapper per feature id).
 - `static/` — assets referenced from `index.html` (bundled & content-hashed by Bun).
 - `bunfig.toml` — registers the Svelte and Tailwind plugins for the dev server.
 - `build.ts` — production build via `Bun.build` with both plugins.

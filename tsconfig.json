@@ -6,7 +6,7 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "allowJs": true,
-    "types": ["bun"],
+    "types": ["bun", "w3c-web-hid"],
 
     // Bundler mode
     "moduleResolution": "bundler",
