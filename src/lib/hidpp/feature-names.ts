@@ -1,6 +1,6 @@
 /**
  * Human-readable names for known HID++ 2.0 feature ids, for display only.
- * Names follow Logitech's `cpg-docs` feature list; unknown ids fall back to hex.
+ * Names follow Logitech's `cpg-docs` and Solaar; unknown ids fall back to hex.
  */
 const FEATURE_NAMES: Record<number, string> = {
   0x0000: "Root",
@@ -12,18 +12,23 @@ const FEATURE_NAMES: Record<number, string> = {
   0x0006: "Device Groups",
   0x0007: "Device Friendly Name",
   0x0008: "Keep-Alive",
+  0x0011: "Property Access",
   0x0020: "Config Change",
   0x0021: "Unique Identifier",
   0x0030: "Target Software",
   0x00c2: "DFU Control (signed)",
+  0x00c3: "DFU Control",
   0x00d0: "DFU",
   0x1000: "Battery Status",
   0x1001: "Battery Voltage",
   0x1004: "Unified Battery",
   0x1010: "Charging Control",
   0x1300: "LED Control",
+  0x1802: "Device Reset",
+  0x1805: "Out-of-Box State",
   0x1814: "Change Host",
   0x1815: "Hosts Info",
+  0x1816: "BLE Pro Pre-Pairing",
   0x1981: "Backlight",
   0x1982: "Backlight 2",
   0x1b04: "Reprogrammable Controls",
@@ -37,12 +42,14 @@ const FEATURE_NAMES: Record<number, string> = {
   0x2111: "SmartShift Enhanced",
   0x2120: "High-Resolution Scrolling",
   0x2121: "HiRes Wheel",
+  0x2130: "Low-Resolution Wheel",
   0x2150: "Thumbwheel",
   0x2200: "Mouse Pointer",
   0x2201: "Adjustable DPI",
   0x2202: "Extended Adjustable DPI",
   0x2205: "Pointer Motion Scaling",
   0x2230: "Sensor Angle Snapping",
+  0x2250: "XY Stats",
   0x2400: "Hybrid Tracking Engine",
   0x40a3: "Fn Inversion (multi-host)",
   0x4301: "Solar Dashboard",
