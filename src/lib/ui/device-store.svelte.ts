@@ -54,6 +54,26 @@ class DeviceStore {
   busy = $state(false);
 
   #channels = new Map<string, HidppChannel>();
+  #started = false;
+
+  /**
+   * Attaches already-granted devices and starts watching for hotplug events, so
+   * a granted device plugged in (or a paired device's receiver reconnecting)
+   * appears automatically and an unplugged one disappears. Idempotent.
+   */
+  start(): void {
+    if (!this.supported || this.#started) return;
+    this.#started = true;
+    navigator.hid.addEventListener(
+      "connect",
+      (event) => void this.#attach(event.device),
+    );
+    navigator.hid.addEventListener(
+      "disconnect",
+      (event) => void this.#detach(event.device),
+    );
+    void this.restore();
+  }
 
   /** Prompts the user to grant a device, then attaches whatever they pick. */
   async connect(): Promise<void> {
@@ -92,6 +112,18 @@ class DeviceStore {
       this.#channels.delete(managed.channelKey);
       await channel?.close().catch(() => undefined);
     }
+  }
+
+  /** Drops every card on a hotplugged-away device's channel and closes it. */
+  async #detach(hid: HIDDevice): Promise<void> {
+    const channelKey = channelKeyOf(hid);
+    const channel = this.#channels.get(channelKey);
+    if (!channel) return;
+    this.#channels.delete(channelKey);
+    this.devices = this.devices.filter(
+      (entry) => entry.channelKey !== channelKey,
+    );
+    await channel.close().catch(() => undefined);
   }
 
   async #attach(hid: HIDDevice): Promise<void> {

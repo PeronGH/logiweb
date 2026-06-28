@@ -8,7 +8,9 @@
 
   const store = deviceStore;
 
-  onMount(() => void store.restore());
+  onMount(() => {
+    store.start();
+  });
 </script>
 
 <main class="mx-auto mt-12 max-w-2xl px-4">
