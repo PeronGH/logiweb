@@ -64,3 +64,8 @@ export {
   type HostsInfo,
   type HostSlot,
 } from "./features/hosts-info";
+export {
+  ReprogControlsFeature,
+  type Control,
+} from "./features/reprog-controls";
+export { controlName } from "./control-names";

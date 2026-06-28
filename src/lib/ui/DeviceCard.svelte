@@ -5,12 +5,14 @@
     AdjustableDpiFeature,
     HostsInfoFeature,
     ReportRateFeature,
+    ReprogControlsFeature,
     SmartShiftFeature,
     UnifiedBatteryFeature,
   } from "../hidpp";
   import { deviceStore, type ManagedDevice } from "./device-store.svelte";
   import DeviceFeatures from "./DeviceFeatures.svelte";
   import BatteryPanel from "./panels/BatteryPanel.svelte";
+  import ButtonsPanel from "./panels/ButtonsPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
@@ -70,6 +72,9 @@
     {/if}
     {#if device.supports(HostsInfoFeature)}
       <HostsPanel {device} />
+    {/if}
+    {#if device.supports(ReprogControlsFeature)}
+      <ButtonsPanel {device} />
     {/if}
   </dl>
 
