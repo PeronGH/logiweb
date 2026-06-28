@@ -15,7 +15,8 @@ export {
 } from "./webhid";
 export {
   isReceiver,
-  enumeratePairedDevices,
+  watchConnections,
+  triggerDeviceArrival,
   type PairedDevice,
 } from "./receiver";
 

@@ -4,11 +4,13 @@ import {
   DeviceTypeAndNameFeature,
   HidppChannel,
   HidppDevice,
-  enumeratePairedDevices,
   getGrantedLogitechDevices,
   isReceiver,
   isWebHidSupported,
   requestLogitechDevices,
+  triggerDeviceArrival,
+  watchConnections,
+  type PairedDevice,
 } from "../hidpp";
 
 const KIND_LABELS: Record<number, string> = {
@@ -42,10 +44,11 @@ function channelKeyOf(device: HIDDevice): string {
 }
 
 /**
- * Owns the connected devices and the connect/restore lifecycle. A direct device
- * yields one card; a receiver fans its one channel out into a card per online
- * paired device. Channels are reference-counted by {@link ManagedDevice.channelKey}
- * and closed once their last card is removed.
+ * Owns the connected devices and their lifecycle. A direct device yields one
+ * card. A receiver keeps its one channel open and a card appears or disappears
+ * per online paired device as the receiver reports wake/sleep — the card set is
+ * driven entirely by connection notifications. Channels (and their receiver
+ * watchers) are torn down once their last card is removed or on hotplug-away.
  */
 class DeviceStore {
   readonly supported = isWebHidSupported();
@@ -54,12 +57,14 @@ class DeviceStore {
   busy = $state(false);
 
   #channels = new Map<string, HidppChannel>();
+  #receiverWatchers = new Map<string, () => void>();
+  #openingSlots = new Set<string>();
   #started = false;
 
   /**
    * Attaches already-granted devices and starts watching for hotplug events, so
-   * a granted device plugged in (or a paired device's receiver reconnecting)
-   * appears automatically and an unplugged one disappears. Idempotent.
+   * a granted device plugged in appears automatically and an unplugged one
+   * disappears. Idempotent.
    */
   start(): void {
     if (!this.supported || this.#started) return;
@@ -100,7 +105,7 @@ class DeviceStore {
     }
   }
 
-  /** Drops a device's card, closing its channel once no card still uses it. */
+  /** Drops a device's card, tearing down its channel once no card still uses it. */
   async remove(key: string): Promise<void> {
     const managed = this.devices.find((entry) => entry.key === key);
     if (!managed) return;
@@ -108,22 +113,8 @@ class DeviceStore {
     if (
       !this.devices.some((entry) => entry.channelKey === managed.channelKey)
     ) {
-      const channel = this.#channels.get(managed.channelKey);
-      this.#channels.delete(managed.channelKey);
-      await channel?.close().catch(() => undefined);
+      await this.#closeChannel(managed.channelKey);
     }
-  }
-
-  /** Drops every card on a hotplugged-away device's channel and closes it. */
-  async #detach(hid: HIDDevice): Promise<void> {
-    const channelKey = channelKeyOf(hid);
-    const channel = this.#channels.get(channelKey);
-    if (!channel) return;
-    this.#channels.delete(channelKey);
-    this.devices = this.devices.filter(
-      (entry) => entry.channelKey !== channelKey,
-    );
-    await channel.close().catch(() => undefined);
   }
 
   async #attach(hid: HIDDevice): Promise<void> {
@@ -135,52 +126,87 @@ class DeviceStore {
       channel = await HidppChannel.open(hid);
       this.#channels.set(channelKey, channel);
 
-      const cards = isReceiver(hid)
-        ? await this.#receiverCards(channelKey, channel)
-        : [
-            await this.#deviceCard(
-              channelKey,
-              channel,
-              DIRECT_DEVICE_INDEX,
-              hid.productName || "Logitech device",
-            ),
-          ];
-
-      if (cards.length === 0) {
-        this.#channels.delete(channelKey);
-        await channel.close().catch(() => undefined);
-        this.status = `${hid.productName || "Receiver"}: no online devices found`;
-        return;
+      if (isReceiver(hid)) {
+        // Watch first so the re-announced devices (and later wake/sleep) all
+        // flow through one handler; the channel stays open with zero cards
+        // until a device comes online.
+        this.#receiverWatchers.set(
+          channelKey,
+          watchConnections(
+            channel,
+            (paired) => void this.#onConnection(channelKey, paired),
+          ),
+        );
+        await triggerDeviceArrival(channel);
+      } else {
+        const card = await this.#deviceCard(
+          channelKey,
+          channel,
+          DIRECT_DEVICE_INDEX,
+          hid.productName || "Logitech device",
+        );
+        this.devices = [...this.devices, card];
       }
-      this.devices = [...this.devices, ...cards];
     } catch (cause) {
-      this.#channels.delete(channelKey);
-      if (channel) await channel.close().catch(() => undefined);
+      await this.#closeChannel(channelKey);
       this.status = `${hid.productName || "Device"}: ${describe(cause)}`;
     }
   }
 
-  async #receiverCards(
-    channelKey: string,
-    channel: HidppChannel,
-  ): Promise<ManagedDevice[]> {
-    const cards: ManagedDevice[] = [];
-    for (const paired of await enumeratePairedDevices(channel)) {
-      if (!paired.online) continue;
-      try {
-        cards.push(
-          await this.#deviceCard(
-            channelKey,
-            channel,
-            paired.index,
-            `Device ${paired.index.toString()}`,
-          ),
-        );
-      } catch {
-        // A slot that doesn't answer HID++ 2.0 — skip it rather than fail the lot.
-      }
+  /** Drops every card on a hotplugged-away device's channel and tears it down. */
+  async #detach(hid: HIDDevice): Promise<void> {
+    const channelKey = channelKeyOf(hid);
+    if (!this.#channels.has(channelKey)) return;
+    this.devices = this.devices.filter(
+      (entry) => entry.channelKey !== channelKey,
+    );
+    await this.#closeChannel(channelKey);
+  }
+
+  /** Adds or removes a paired device's card as the receiver reports it online/offline. */
+  async #onConnection(channelKey: string, paired: PairedDevice): Promise<void> {
+    const channel = this.#channels.get(channelKey);
+    if (!channel) return;
+    const key = `${channelKey}#${paired.index.toString(16)}`;
+
+    if (!paired.online) {
+      this.devices = this.devices.filter((entry) => entry.key !== key);
+      return;
     }
-    return cards;
+    if (
+      this.#openingSlots.has(key) ||
+      this.devices.some((entry) => entry.key === key)
+    )
+      return;
+
+    this.#openingSlots.add(key);
+    try {
+      const card = await this.#deviceCard(
+        channelKey,
+        channel,
+        paired.index,
+        `Device ${paired.index.toString()}`,
+      );
+      // The receiver may have detached, or the card been added, while opening.
+      if (
+        this.#channels.get(channelKey) === channel &&
+        !this.devices.some((e) => e.key === key)
+      ) {
+        this.devices = [...this.devices, card];
+      }
+    } catch {
+      // Slot stopped answering HID++ 2.0 (e.g. slept mid-open) — leave it out.
+    } finally {
+      this.#openingSlots.delete(key);
+    }
+  }
+
+  async #closeChannel(channelKey: string): Promise<void> {
+    this.#receiverWatchers.get(channelKey)?.();
+    this.#receiverWatchers.delete(channelKey);
+    const channel = this.#channels.get(channelKey);
+    this.#channels.delete(channelKey);
+    await channel?.close().catch(() => undefined);
   }
 
   async #deviceCard(
