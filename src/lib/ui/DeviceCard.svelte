@@ -1,6 +1,5 @@
 <script lang="ts">
   import Unlink from "@lucide/svelte/icons/unlink";
-  import Unplug from "@lucide/svelte/icons/unplug";
   import {
     AdjustableDpiFeature,
     HostsInfoFeature,
@@ -44,15 +43,6 @@
       >
         <Unlink size={14} />
         Unpair
-      </button>
-    {:else}
-      <button
-        class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
-        title="Disconnect"
-        onclick={() => void deviceStore.remove(managed.key)}
-      >
-        <Unplug size={14} />
-        Disconnect
       </button>
     {/if}
   </div>

@@ -110,18 +110,6 @@ class DeviceStore {
     }
   }
 
-  /** Drops a device's card, tearing down its channel once no card still uses it. */
-  async remove(key: string): Promise<void> {
-    const managed = this.devices.find((entry) => entry.key === key);
-    if (!managed) return;
-    this.devices = this.devices.filter((entry) => entry.key !== key);
-    if (
-      !this.devices.some((entry) => entry.channelKey === managed.channelKey)
-    ) {
-      await this.#closeChannel(managed.channelKey);
-    }
-  }
-
   /**
    * Permanently unpairs a receiver-paired device, then drops its card. The
    * receiver channel stays open so other devices and re-pairing continue. No-op
