@@ -17,19 +17,21 @@
 </script>
 
 <section class="rounded-xl border border-gray-200 p-5 shadow-sm">
-  <div class="flex items-baseline justify-between">
-    <h2 class="text-lg font-semibold">{managed.name}</h2>
-    <div class="flex items-center gap-3 text-xs text-gray-400">
-      <span>{managed.kind} · {managed.featureCount} features</span>
-      <button
-        class="text-gray-400 transition-colors hover:text-red-600"
-        title="Disconnect"
-        aria-label="Disconnect"
-        onclick={() => void deviceStore.remove(managed.key)}
+  <div class="flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <h2 class="truncate text-lg font-semibold">{managed.name}</h2>
+      <span class="text-xs text-gray-400"
+        >{managed.kind} · {managed.featureCount} features</span
       >
-        <Unplug size={16} />
-      </button>
     </div>
+    <button
+      class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+      title="Disconnect"
+      onclick={() => void deviceStore.remove(managed.key)}
+    >
+      <Unplug size={14} />
+      Disconnect
+    </button>
   </div>
 
   <dl class="mt-4 space-y-3 text-sm">
