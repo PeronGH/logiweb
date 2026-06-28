@@ -2,6 +2,7 @@
   import Unlink from "@lucide/svelte/icons/unlink";
   import {
     AdjustableDpiFeature,
+    DeviceInformationFeature,
     HostsInfoFeature,
     ReportRateFeature,
     ReprogControlsFeature,
@@ -12,6 +13,7 @@
   import DeviceFeatures from "./DeviceFeatures.svelte";
   import BatteryPanel from "./panels/BatteryPanel.svelte";
   import ButtonsPanel from "./panels/ButtonsPanel.svelte";
+  import DeviceInfoPanel from "./panels/DeviceInfoPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
@@ -65,6 +67,9 @@
     {/if}
     {#if device.supports(ReprogControlsFeature)}
       <ButtonsPanel {device} />
+    {/if}
+    {#if device.supports(DeviceInformationFeature)}
+      <DeviceInfoPanel {device} />
     {/if}
   </dl>
 

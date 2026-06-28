@@ -69,3 +69,9 @@ export {
   type Control,
 } from "./features/reprog-controls";
 export { controlName } from "./control-names";
+export {
+  DeviceInformationFeature,
+  type DeviceInfo,
+  type FirmwareEntity,
+  type DeviceInfoSummary,
+} from "./features/device-information";
