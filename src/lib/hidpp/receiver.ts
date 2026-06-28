@@ -3,15 +3,22 @@ import { RECEIVER_INDEX, writeRegister } from "./hidpp10";
 import { LOGITECH_VENDOR_ID } from "./webhid";
 
 /**
- * Logi Bolt receiver support: discover the devices paired to a USB receiver so
- * each can be addressed by its pairing slot over the shared HID++ channel.
+ * Logi Bolt and Unifying receiver support: discover the devices paired to a USB
+ * receiver so each can be addressed by its pairing slot over the shared HID++
+ * channel.
  *
  * Device-discovery uses the HID++ 1.0 notification trick (OpenLogi `bolt.rs` /
- * Solaar): enabling wireless notifications and writing the connection register
- * makes the receiver re-announce every connected device as a `0x41` connection
- * notification, and the register write is acknowledged only after those land.
+ * `unifying.rs` / Solaar): enabling wireless notifications and writing the
+ * connection register makes the receiver re-announce every connected device as
+ * a `0x41` connection notification, and the register write is acknowledged only
+ * after those land. The slot/online/wpid fields of that notification are
+ * identical across Bolt and Unifying, so one path serves both.
  */
-const BOLT_PRODUCT_ID = 0xc548;
+const RECEIVER_PRODUCT_IDS = new Set<number>([
+  0xc548, // Logi Bolt
+  0xc52b, // Unifying
+  0xc532, // Unifying
+]);
 
 const REG_NOTIFICATIONS = 0x00;
 const REG_CONNECTIONS = 0x02;
@@ -21,7 +28,7 @@ const SUBID_DEVICE_CONNECTION = 0x41;
 export function isReceiver(device: HIDDevice): boolean {
   return (
     device.vendorId === LOGITECH_VENDOR_ID &&
-    device.productId === BOLT_PRODUCT_ID
+    RECEIVER_PRODUCT_IDS.has(device.productId)
   );
 }
 
