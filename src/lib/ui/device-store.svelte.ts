@@ -5,12 +5,14 @@ import {
   HidppChannel,
   HidppDevice,
   getGrantedLogitechDevices,
-  isReceiver,
   isWebHidSupported,
+  receiverKind,
   requestLogitechDevices,
   triggerDeviceArrival,
+  unpairDevice,
   watchConnections,
   type PairedDevice,
+  type ReceiverKind,
 } from "../hidpp";
 
 const KIND_LABELS: Record<number, string> = {
@@ -33,6 +35,8 @@ export interface ManagedDevice {
   kind: string;
   featureCount: number;
   device: HidppDevice;
+  /** The receiver family this device is paired through, or `null` if direct. */
+  receiverKind: ReceiverKind | null;
 }
 
 function describe(cause: unknown): string {
@@ -117,6 +121,29 @@ class DeviceStore {
     }
   }
 
+  /**
+   * Permanently unpairs a receiver-paired device, then drops its card. The
+   * receiver channel stays open so other devices and re-pairing continue. No-op
+   * for a directly-connected device.
+   */
+  async unpair(key: string): Promise<void> {
+    const managed = this.devices.find((entry) => entry.key === key);
+    if (!managed?.receiverKind) return;
+    const channel = this.#channels.get(managed.channelKey);
+    if (!channel) return;
+    try {
+      await unpairDevice(
+        channel,
+        managed.receiverKind,
+        managed.device.deviceIndex,
+      );
+    } catch (cause) {
+      this.status = `Unpair failed: ${describe(cause)}`;
+      return;
+    }
+    this.devices = this.devices.filter((entry) => entry.key !== key);
+  }
+
   async #attach(hid: HIDDevice): Promise<void> {
     const channelKey = channelKeyOf(hid);
     if (this.#channels.has(channelKey)) return;
@@ -126,7 +153,8 @@ class DeviceStore {
       channel = await HidppChannel.open(hid);
       this.#channels.set(channelKey, channel);
 
-      if (isReceiver(hid)) {
+      const kind = receiverKind(hid);
+      if (kind) {
         // Watch first so the re-announced devices (and later wake/sleep) all
         // flow through one handler; the channel stays open with zero cards
         // until a device comes online.
@@ -134,7 +162,7 @@ class DeviceStore {
           channelKey,
           watchConnections(
             channel,
-            (paired) => void this.#onConnection(channelKey, paired),
+            (paired) => void this.#onConnection(channelKey, kind, paired),
           ),
         );
         await triggerDeviceArrival(channel);
@@ -144,6 +172,7 @@ class DeviceStore {
           channel,
           DIRECT_DEVICE_INDEX,
           hid.productName || "Logitech device",
+          null,
         );
         this.devices = [...this.devices, card];
       }
@@ -164,7 +193,11 @@ class DeviceStore {
   }
 
   /** Adds or removes a paired device's card as the receiver reports it online/offline. */
-  async #onConnection(channelKey: string, paired: PairedDevice): Promise<void> {
+  async #onConnection(
+    channelKey: string,
+    kind: ReceiverKind,
+    paired: PairedDevice,
+  ): Promise<void> {
     const channel = this.#channels.get(channelKey);
     if (!channel) return;
     const key = `${channelKey}#${paired.index.toString(16)}`;
@@ -186,6 +219,7 @@ class DeviceStore {
         channel,
         paired.index,
         `Device ${paired.index.toString()}`,
+        kind,
       );
       // The receiver may have detached, or the card been added, while opening.
       if (
@@ -214,6 +248,7 @@ class DeviceStore {
     channel: HidppChannel,
     deviceIndex: number,
     fallbackName: string,
+    receiverKind: ReceiverKind | null,
   ): Promise<ManagedDevice> {
     const device = await HidppDevice.open(channel, deviceIndex);
     await device.enumerateFeatures();
@@ -229,6 +264,7 @@ class DeviceStore {
       kind,
       featureCount: device.features.length,
       device,
+      receiverKind,
     };
   }
 }

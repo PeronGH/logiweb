@@ -15,9 +15,12 @@ export {
 } from "./webhid";
 export {
   isReceiver,
+  receiverKind,
   watchConnections,
   triggerDeviceArrival,
+  unpairDevice,
   type PairedDevice,
+  type ReceiverKind,
 } from "./receiver";
 
 export { RootFeature, type RootFeatureInfo } from "./features/root";

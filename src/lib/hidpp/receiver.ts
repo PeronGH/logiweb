@@ -1,5 +1,5 @@
 import type { HidppChannel } from "./channel";
-import { RECEIVER_INDEX, writeRegister } from "./hidpp10";
+import { RECEIVER_INDEX, writeLongRegister, writeRegister } from "./hidpp10";
 import { LOGITECH_VENDOR_ID } from "./webhid";
 
 /**
@@ -14,22 +14,34 @@ import { LOGITECH_VENDOR_ID } from "./webhid";
  * the connection register re-announces every currently-online device. The
  * slot/online/wpid fields are identical across Bolt and Unifying.
  */
-const RECEIVER_PRODUCT_IDS = new Set<number>([
-  0xc548, // Logi Bolt
-  0xc52b, // Unifying
-  0xc532, // Unifying
+/** A supported receiver family — they differ in their unpair register. */
+export type ReceiverKind = "bolt" | "unifying";
+
+const RECEIVERS = new Map<number, ReceiverKind>([
+  [0xc548, "bolt"],
+  [0xc52b, "unifying"],
+  [0xc532, "unifying"],
 ]);
 
 const REG_NOTIFICATIONS = 0x00;
 const REG_CONNECTIONS = 0x02;
 const SUBID_DEVICE_CONNECTION = 0x41;
 
+// Unpair register differs by family (verified against Solaar): Bolt uses a long
+// write to 0xC1, Unifying a short write to 0xB2; both with action byte 0x03.
+const REG_BOLT_PAIRING = 0xc1;
+const REG_UNIFYING_PAIRING = 0xb2;
+const PAIRING_UNPAIR = 0x03;
+
+/** The receiver family of a granted HID device, or `null` if it isn't one. */
+export function receiverKind(device: HIDDevice): ReceiverKind | null {
+  if (device.vendorId !== LOGITECH_VENDOR_ID) return null;
+  return RECEIVERS.get(device.productId) ?? null;
+}
+
 /** Whether a granted HID device is a (supported) Logitech receiver. */
 export function isReceiver(device: HIDDevice): boolean {
-  return (
-    device.vendorId === LOGITECH_VENDOR_ID &&
-    RECEIVER_PRODUCT_IDS.has(device.productId)
-  );
+  return receiverKind(device) !== null;
 }
 
 /** A device paired to a receiver, addressed by its 1-based pairing slot. */
@@ -86,4 +98,24 @@ export async function triggerDeviceArrival(
     REG_CONNECTIONS,
     [0x02, 0x00, 0x00],
   );
+}
+
+/** Permanently unpairs the device in `slot` from the receiver. */
+export async function unpairDevice(
+  channel: HidppChannel,
+  kind: ReceiverKind,
+  slot: number,
+): Promise<void> {
+  if (kind === "bolt") {
+    await writeLongRegister(channel, RECEIVER_INDEX, REG_BOLT_PAIRING, [
+      PAIRING_UNPAIR,
+      slot,
+    ]);
+  } else {
+    await writeRegister(channel, RECEIVER_INDEX, REG_UNIFYING_PAIRING, [
+      PAIRING_UNPAIR,
+      slot,
+      0x00,
+    ]);
+  }
 }

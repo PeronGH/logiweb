@@ -11,16 +11,19 @@ import { HidppError } from "./errors";
 /**
  * HID++ 1.0 Register Access Protocol (RAP).
  *
- * Short message layout (payload, excluding report id):
+ * Message layout (payload, excluding report id):
  *   [0] device index   [1] sub-id   [2] register address   [3..] parameters
  *
- * An error response carries sub-id `0x8F`, echoes the request's sub-id in
- * byte 2 and the register address in byte 3, and the error code in byte 4.
- * Ported from OpenLogi `protocol/v10.rs`. Used for receiver registers, which
- * predate HID++ 2.0.
+ * Short registers (sub-id `0x80`/`0x81`) carry 3 parameter bytes in a short
+ * report; long registers (`0x82`/`0x83`) carry 16 in a long report. An error
+ * response uses sub-id `0x8F`, echoes the request's sub-id in byte 2 and the
+ * register address in byte 3, with the error code in byte 4. Ported from
+ * OpenLogi `protocol/v10.rs` and cross-checked against Solaar; used for receiver
+ * registers, which predate HID++ 2.0.
  */
 const SET_REGISTER = 0x80;
 const GET_REGISTER = 0x81;
+const SET_LONG_REGISTER = 0x82;
 const ERROR = 0x8f;
 
 /** Device index addressing the receiver (or a corded device) itself. */
@@ -31,19 +34,18 @@ async function rap(
   deviceIndex: number,
   subId: number,
   address: number,
-  params: readonly [number, number, number],
+  params: Uint8Array,
+  long: boolean,
 ): Promise<RawReport> {
-  // Receivers expose the short report; up-convert only if a transport somehow
-  // offers long alone (mirrors the HID++ 2.0 path).
-  const useLong = !channel.supportsShort && channel.supportsLong;
+  // Long-register ops are inherently long reports; short ops up-convert only if
+  // a transport somehow offers long alone (receivers expose short).
+  const useLong = long || (!channel.supportsShort && channel.supportsLong);
   const reportId = useLong ? LONG_REPORT_ID : SHORT_REPORT_ID;
   const data = new Uint8Array(useLong ? LONG_PAYLOAD_LEN : SHORT_PAYLOAD_LEN);
   data[0] = deviceIndex;
   data[1] = subId;
   data[2] = address;
-  data[3] = params[0];
-  data[4] = params[1];
-  data[5] = params[2];
+  data.set(params.subarray(0, data.length - 3), 3);
 
   const predicate = (report: RawReport): boolean => {
     const d = report.data;
@@ -79,7 +81,8 @@ export async function readRegister(
     deviceIndex,
     GET_REGISTER,
     address,
-    params,
+    Uint8Array.from(params),
+    false,
   );
   return response.data.subarray(3, 6);
 }
@@ -91,5 +94,29 @@ export async function writeRegister(
   address: number,
   params: readonly [number, number, number],
 ): Promise<void> {
-  await rap(channel, deviceIndex, SET_REGISTER, address, params);
+  await rap(
+    channel,
+    deviceIndex,
+    SET_REGISTER,
+    address,
+    Uint8Array.from(params),
+    false,
+  );
+}
+
+/** Writes a long (16-byte) register; `payload` is zero-padded to 16 bytes. */
+export async function writeLongRegister(
+  channel: HidppChannel,
+  deviceIndex: number,
+  address: number,
+  payload: readonly number[],
+): Promise<void> {
+  await rap(
+    channel,
+    deviceIndex,
+    SET_LONG_REGISTER,
+    address,
+    Uint8Array.from(payload),
+    true,
+  );
 }
