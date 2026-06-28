@@ -1,4 +1,4 @@
-# logi-web
+# LogiWeb
 
 A pure-frontend [Svelte 5](https://svelte.dev) single-page app that configures Logitech HID++ devices directly from the browser over [WebHID](https://wicg.github.io/webhid/) — DPI, SmartShift, report rate, and battery, with no native app or driver. Bundled by [Bun](https://bun.com), styled with [Tailwind CSS v4](https://tailwindcss.com), using the official [`bun-plugin-svelte`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-svelte) and [`bun-plugin-tailwind`](https://github.com/oven-sh/bun/tree/main/packages/bun-plugin-tailwind). No Vite.
 

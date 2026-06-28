@@ -11,10 +11,10 @@
 
 <main class="mx-auto mt-12 max-w-2xl px-4">
   <header class="text-center">
-    <h1 class="text-3xl font-bold tracking-tight">Logitech device console</h1>
+    <h1 class="text-3xl font-bold tracking-tight">LogiWeb</h1>
     <p class="mt-2 text-sm text-gray-600">
-      Configure HID++ devices over WebHID — DPI, SmartShift, report rate,
-      battery. No app, no driver.
+      Configure Logitech HID++ devices over WebHID — DPI, SmartShift, report
+      rate, battery. No app, no driver.
     </p>
   </header>
 
