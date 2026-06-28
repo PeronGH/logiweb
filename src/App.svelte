@@ -37,12 +37,12 @@
 
 <footer class="mt-12 mb-8 text-center text-sm text-gray-400">
   <a
-    href="https://github.com/PeronGH"
+    href="https://github.com/PeronGH/logiweb"
     target="_blank"
     rel="noreferrer"
     class="inline-flex items-center gap-1.5 hover:text-gray-700"
   >
     <SiGithub size={15} />
-    PeronGH
+    PeronGH/logiweb
   </a>
 </footer>
