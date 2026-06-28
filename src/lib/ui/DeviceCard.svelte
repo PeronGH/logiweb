@@ -9,6 +9,7 @@
     UnifiedBatteryFeature,
   } from "../hidpp";
   import { deviceStore, type ManagedDevice } from "./device-store.svelte";
+  import DeviceFeatures from "./DeviceFeatures.svelte";
   import BatteryPanel from "./panels/BatteryPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
@@ -71,4 +72,6 @@
       <HostsPanel {device} />
     {/if}
   </dl>
+
+  <DeviceFeatures {device} />
 </section>

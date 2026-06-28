@@ -12,6 +12,7 @@ export {
   type VersionInfo,
 } from "./protocol";
 export type { FeatureInfo, FeatureType } from "./types";
+export { featureName } from "./feature-names";
 export {
   isWebHidSupported,
   requestLogitechDevices,
