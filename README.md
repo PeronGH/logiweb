@@ -4,7 +4,7 @@ A pure-frontend [Svelte 5](https://svelte.dev) single-page app that configures L
 
 The HID++ protocol layer lives in `src/lib/hidpp/` as a frontend-agnostic TypeScript core: a `HidppChannel` over WebHID plus a catalog of feature wrappers. The wire format (feature ids, function indices, byte layouts, quirks like the DPI range-marker encoding) is reverse-engineered from the [OpenLogi](https://github.com/AprilNEA/OpenLogi) Rust project.
 
-**Requirements:** a Chromium-based browser (Chrome, Edge — WebHID is not in Firefox or Safari), served over HTTPS or `localhost`. This first cut talks to directly-connected devices (USB-wired or Bluetooth-direct, device index `0xFF`); devices behind a Bolt/Unifying receiver need receiver enumeration, which is the next step (the HID++ 1.0 register primitives it builds on are already in `channel.ts`).
+**Requirements:** a Chromium-based browser (Chrome, Edge — WebHID is not in Firefox or Safari), served over HTTPS or `localhost`. Supports directly-connected devices (USB-wired or Bluetooth-direct) and devices paired to a **Logi Bolt receiver** (each online pairing becomes its own card). Unifying receivers aren't handled yet.
 
 ## Usage
 
