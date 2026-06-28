@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Unplug from "@lucide/svelte/icons/unplug";
   import {
     AdjustableDpiFeature,
     ReportRateFeature,
@@ -18,13 +19,15 @@
 <section class="rounded-xl border border-gray-200 p-5 shadow-sm">
   <div class="flex items-baseline justify-between">
     <h2 class="text-lg font-semibold">{managed.name}</h2>
-    <div class="flex items-baseline gap-3 text-xs text-gray-400">
+    <div class="flex items-center gap-3 text-xs text-gray-400">
       <span>{managed.kind} · {managed.featureCount} features</span>
       <button
-        class="text-gray-400 hover:text-red-600"
+        class="text-gray-400 transition-colors hover:text-red-600"
+        title="Disconnect"
+        aria-label="Disconnect"
         onclick={() => void deviceStore.remove(managed.key)}
       >
-        Disconnect
+        <Unplug size={16} />
       </button>
     </div>
   </div>
