@@ -32,7 +32,7 @@
 {:else if info}
   {#if info.firmware}
     <SettingRow label="Firmware">
-      <span class="font-medium">{info.firmware}</span>
+      <span class="font-mono text-xs">{info.firmware}</span>
     </SettingRow>
   {/if}
   {#if info.serial}
