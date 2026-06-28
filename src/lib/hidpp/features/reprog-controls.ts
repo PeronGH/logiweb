@@ -78,8 +78,14 @@ export class ReprogControlsFeature {
           }
         }
       }
-      const remappedTo =
-        targets.length > 0 ? (await this.#getRemap(row.cid)) || null : null;
+      // A control at default reports either 0 or its own cid; both mean "not
+      // remapped". Resetting is done by remapping the control to itself (cid),
+      // not by writing 0 — the device treats remap 0 as "leave unchanged".
+      let remappedTo: number | null = null;
+      if (targets.length > 0) {
+        const raw = await this.#getRemap(row.cid);
+        remappedTo = raw !== 0 && raw !== row.cid ? raw : null;
+      }
       controls.push({
         cid: row.cid,
         taskId: row.taskId,
@@ -91,7 +97,11 @@ export class ReprogControlsFeature {
     return controls;
   }
 
-  /** Remaps a control to `targetCid`, or restores default behaviour with `0`. */
+  /**
+   * Remaps a control to `targetCid`. Pass the control's own cid to restore
+   * default behaviour — the device treats a target of `0` as "leave unchanged",
+   * so `0` does not reset a remap.
+   */
   async remap(cid: number, targetCid: number): Promise<void> {
     const args = new Array<number>(16).fill(0);
     args[0] = (cid >> 8) & 0xff;

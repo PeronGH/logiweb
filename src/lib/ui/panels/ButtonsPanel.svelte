@@ -36,7 +36,7 @@
       controls =
         controls?.map((control) =>
           control.cid === cid
-            ? { ...control, remappedTo: target || null }
+            ? { ...control, remappedTo: target === cid ? null : target }
             : control,
         ) ?? null;
     } catch (cause) {
@@ -61,12 +61,12 @@
           <span class="font-medium">{controlName(control.cid)}</span>
           <select
             class="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
-            value={control.remappedTo ?? 0}
+            value={control.remappedTo ?? control.cid}
             disabled={busy}
             onchange={(event) =>
               void remap(control.cid, Number(event.currentTarget.value))}
           >
-            <option value={0}>Default</option>
+            <option value={control.cid}>Default</option>
             {#each control.remapTargets as target (target)}
               <option value={target}>{controlName(target)}</option>
             {/each}
