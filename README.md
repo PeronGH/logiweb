@@ -22,8 +22,9 @@ bun run format   # prettier --write
 - `index.html` — entry point; loads `src/main.ts` as a module.
 - `src/main.ts` — mounts the Svelte app and wires up HMR.
 - `src/app.css` — Tailwind entry (`@import "tailwindcss";`).
-- `src/App.svelte` — root component; a demo console that lists connected devices and exposes their settings.
+- `src/App.svelte` — thin shell: a connect bar plus a card per connected device.
 - `src/lib/hidpp/` — the frontend-agnostic HID++ core: `channel.ts` (WebHID transport), `protocol.ts` (HID++ 2.0 framing + version detection), `device.ts` (feature enumeration), and `features/` (one wrapper per feature id).
+- `src/lib/ui/` — the UI, structured to mirror the lib: `device-store.svelte.ts` (connection/device-list state), `DeviceCard.svelte` (composes panels gated by `device.supports(...)`), and `panels/` — **one self-contained panel per HID++ feature** that reads and writes its own feature. Adding a feature to the lib is matched by adding a panel here.
 - `static/` — assets referenced from `index.html` (bundled & content-hashed by Bun).
 - `bunfig.toml` — registers the Svelte and Tailwind plugins for the dev server.
 - `build.ts` — production build via `Bun.build` with both plugins.
