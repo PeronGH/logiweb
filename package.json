@@ -2,6 +2,7 @@
   "name": "logiweb",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "bun index.html",
     "build": "bun run build.ts",

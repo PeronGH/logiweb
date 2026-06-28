@@ -42,3 +42,7 @@ LogiWeb does no novel protocol work — it stands on prior implementations and L
 Where OpenLogi and the authoritative sources disagreed, we followed the latter — and contributed fixes back where we could.
 
 Not affiliated with Logitech. "Logitech", "Logi Bolt", and "Unifying" are trademarks of Logitech.
+
+## License
+
+[MIT](LICENSE). The HID++ core was adapted from OpenLogi's `openlogi-hidpp` crate (0BSD); the wire format was verified against Solaar, libratbag, and the Linux kernel driver, whose protocol facts are not copyrightable — so no copyleft obligation carries over.
