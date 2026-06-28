@@ -10,13 +10,21 @@ export const BatteryLevel = {
 } as const;
 export type BatteryLevel = (typeof BatteryLevel)[keyof typeof BatteryLevel];
 
-/** Battery charging status. */
+/**
+ * Battery charging status (`getStatus` byte 2). Values verified against the
+ * Linux kernel `hid-logitech-hidpp` unified-battery mapping and Solaar; note
+ * `2` is "charge in final stage" (nearly full) and `4` is "recharging below
+ * optimal speed" (slow), not a generic error — `5`–`7` are the error codes.
+ */
 export const BatteryStatus = {
   Discharging: 0,
   Charging: 1,
-  ChargingSlow: 2,
+  ChargingNearlyFull: 2,
   Full: 3,
-  Error: 4,
+  ChargingSlow: 4,
+  InvalidBattery: 5,
+  ThermalError: 6,
+  ChargingError: 7,
 } as const;
 export type BatteryStatus = (typeof BatteryStatus)[keyof typeof BatteryStatus];
 

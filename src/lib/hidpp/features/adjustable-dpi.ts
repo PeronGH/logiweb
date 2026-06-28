@@ -9,9 +9,13 @@ import { HidppError } from "../errors";
  * Each entry is a big-endian `u16`. `0x0000` terminates the list (a list that
  * fills the response has no terminator). A value with its top 3 bits set
  * (`0xE000 | step`) is a compact range marker: its start is the previous value,
- * its end is the next value, and it expands to every `start + n*step < end`,
- * plus the (possibly off-grid) end. Ported verbatim from OpenLogi's
- * `parse_dpi_list_payload`.
+ * its end is the next value, and it expands to the on-grid values
+ * `start + n*step <= end`.
+ *
+ * The grid is exact: a `step` that does not divide `end - start` stops before
+ * `end`, so an off-grid `end` is not emitted. This matches Solaar and libratbag,
+ * which only accept on-grid DPI values (an off-grid value is rejected on write)
+ * — unlike OpenLogi, which force-appends `end`.
  */
 export function parseDpiList(bytes: Uint8Array): number[] {
   const values: number[] = [];
@@ -32,8 +36,8 @@ export function parseDpiList(bytes: Uint8Array): number[] {
       }
       const end = ((bytes[offset + 2] ?? 0) << 8) | (bytes[offset + 3] ?? 0);
       if (end < start) throw new HidppError("descending DPI range marker");
-      for (let next = start + step; next < end; next += step) values.push(next);
-      values.push(end);
+      for (let next = start + step; next <= end; next += step)
+        values.push(next);
       offset += 4;
     } else {
       values.push(value);

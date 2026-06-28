@@ -18,9 +18,12 @@
   const STATUS_LABELS: Record<number, string> = {
     [BatteryStatus.Discharging]: "Discharging",
     [BatteryStatus.Charging]: "Charging",
-    [BatteryStatus.ChargingSlow]: "Charging (slow)",
+    [BatteryStatus.ChargingNearlyFull]: "Charging (nearly full)",
     [BatteryStatus.Full]: "Full",
-    [BatteryStatus.Error]: "Error",
+    [BatteryStatus.ChargingSlow]: "Charging (slow)",
+    [BatteryStatus.InvalidBattery]: "Invalid battery",
+    [BatteryStatus.ThermalError]: "Thermal error",
+    [BatteryStatus.ChargingError]: "Charging error",
   };
 
   onMount(() => void load());
