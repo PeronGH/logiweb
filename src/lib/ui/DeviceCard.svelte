@@ -5,9 +5,11 @@
     DeviceInformationFeature,
     ExtendedReportRateFeature,
     FnInversionFeature,
+    HiResWheelFeature,
     HostsInfoFeature,
     ReportRateFeature,
     ReprogControlsFeature,
+    SmartShiftEnhancedFeature,
     SmartShiftFeature,
     UnifiedBatteryFeature,
   } from "../hidpp";
@@ -18,6 +20,7 @@
   import DeviceInfoPanel from "./panels/DeviceInfoPanel.svelte";
   import DpiPanel from "./panels/DpiPanel.svelte";
   import ExtendedReportRatePanel from "./panels/ExtendedReportRatePanel.svelte";
+  import HiResWheelPanel from "./panels/HiResWheelPanel.svelte";
   import FnInversionPanel from "./panels/FnInversionPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
@@ -60,8 +63,11 @@
     {#if device.supports(AdjustableDpiFeature)}
       <DpiPanel {device} />
     {/if}
-    {#if device.supports(SmartShiftFeature)}
+    {#if device.supports(SmartShiftEnhancedFeature) || device.supports(SmartShiftFeature)}
       <SmartShiftPanel {device} />
+    {/if}
+    {#if device.supports(HiResWheelFeature)}
+      <HiResWheelPanel {device} />
     {/if}
     {#if device.supports(ReportRateFeature)}
       <ReportRatePanel {device} />

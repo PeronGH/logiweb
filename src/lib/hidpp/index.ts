@@ -64,6 +64,11 @@ export {
   type SmartShiftEnhancedStatus,
   type SmartShiftEnhancedChange,
 } from "./features/smartshift-enhanced";
+export {
+  HiResWheelFeature,
+  type HiResWheelCapabilities,
+  type HiResWheelMode,
+} from "./features/hires-wheel";
 export { ReportRateFeature } from "./features/report-rate";
 export { ExtendedReportRateFeature } from "./features/extended-report-rate";
 export { FnInversionFeature } from "./features/fn-inversion";
