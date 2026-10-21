@@ -1,4 +1,5 @@
 <script lang="ts">
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import Unlink from "@lucide/svelte/icons/unlink";
   import {
     AdjustableDpiFeature,
@@ -30,6 +31,8 @@
 
   let { managed }: { managed: ManagedDevice } = $props();
   const device = $derived(managed.device);
+  /** Bumped to remount the panels, which re-read their settings on mount. */
+  let generation = $state(0);
 
   function unpair(): void {
     if (window.confirm(`Unpair ${managed.name} from the receiver?`)) {
@@ -46,53 +49,65 @@
         >{managed.kind} · {managed.featureCount} features</span
       >
     </div>
-    {#if managed.receiverKind}
+    <div class="flex shrink-0 items-center gap-2">
       <button
-        class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
-        title="Unpair from receiver"
-        onclick={unpair}
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+        title="Re-read settings from the device"
+        onclick={() => generation++}
       >
-        <Unlink size={14} />
-        Unpair
+        <RefreshCw size={14} />
+        Refresh
       </button>
-    {/if}
+      {#if managed.receiverKind}
+        <button
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+          title="Unpair from receiver"
+          onclick={unpair}
+        >
+          <Unlink size={14} />
+          Unpair
+        </button>
+      {/if}
+    </div>
   </div>
 
-  <dl class="mt-4 space-y-3 text-sm">
-    {#if device.supports(UnifiedBatteryFeature)}
-      <BatteryPanel {device} />
-    {/if}
-    {#if device.supports(AdjustableDpiFeature)}
-      <DpiPanel {device} />
-    {/if}
-    {#if device.supports(SmartShiftEnhancedFeature) || device.supports(SmartShiftFeature)}
-      <SmartShiftPanel {device} />
-    {/if}
-    {#if device.supports(HiResWheelFeature)}
-      <HiResWheelPanel {device} />
-    {/if}
-    {#if device.supports(ReportRateFeature)}
-      <ReportRatePanel {device} />
-    {/if}
-    {#if device.supports(ExtendedReportRateFeature)}
-      <ExtendedReportRatePanel {device} />
-    {/if}
-    {#if device.supports(HostsInfoFeature)}
-      <HostsPanel {device} />
-    {/if}
-    {#if device.supports(FnInversionFeature)}
-      <FnInversionPanel {device} />
-    {/if}
-    {#if device.supports(ReprogControlsFeature)}
-      <ButtonsPanel {device} />
-    {/if}
-    {#if device.supports(DeviceFriendlyNameFeature)}
-      <FriendlyNamePanel {device} />
-    {/if}
-    {#if device.supports(DeviceInformationFeature)}
-      <DeviceInfoPanel {device} />
-    {/if}
-  </dl>
+  {#key generation}
+    <dl class="mt-4 space-y-3 text-sm">
+      {#if device.supports(UnifiedBatteryFeature)}
+        <BatteryPanel {device} />
+      {/if}
+      {#if device.supports(AdjustableDpiFeature)}
+        <DpiPanel {device} />
+      {/if}
+      {#if device.supports(SmartShiftEnhancedFeature) || device.supports(SmartShiftFeature)}
+        <SmartShiftPanel {device} />
+      {/if}
+      {#if device.supports(HiResWheelFeature)}
+        <HiResWheelPanel {device} />
+      {/if}
+      {#if device.supports(ReportRateFeature)}
+        <ReportRatePanel {device} />
+      {/if}
+      {#if device.supports(ExtendedReportRateFeature)}
+        <ExtendedReportRatePanel {device} />
+      {/if}
+      {#if device.supports(HostsInfoFeature)}
+        <HostsPanel {device} />
+      {/if}
+      {#if device.supports(FnInversionFeature)}
+        <FnInversionPanel {device} />
+      {/if}
+      {#if device.supports(ReprogControlsFeature)}
+        <ButtonsPanel {device} />
+      {/if}
+      {#if device.supports(DeviceFriendlyNameFeature)}
+        <FriendlyNamePanel {device} />
+      {/if}
+      {#if device.supports(DeviceInformationFeature)}
+        <DeviceInfoPanel {device} />
+      {/if}
+    </dl>
+  {/key}
 
   <DeviceFeatures {device} />
 </section>
