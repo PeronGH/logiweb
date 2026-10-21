@@ -61,10 +61,10 @@ async function rap(
 
   const response = await channel.sendRaw(reportId, data, predicate);
   if (response.data[1] === ERROR) {
-    throw new HidppError(
-      "HID++ 1.0 register access failed",
-      response.data[4] ?? 0,
-    );
+    throw new HidppError("HID++ 1.0 register access failed", {
+      code: response.data[4] ?? 0,
+      protocol: "v1.0",
+    });
   }
   return response;
 }

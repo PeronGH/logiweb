@@ -5,7 +5,13 @@ export {
   type ReportListener,
 } from "./channel";
 export { HidppDevice, type FeatureCtor } from "./device";
-export { HidppError, HidppErrorCode, errorCodeName } from "./errors";
+export {
+  HidppError,
+  HidppErrorCode,
+  Hidpp10ErrorCode,
+  errorCodeName,
+  type ErrorProtocol,
+} from "./errors";
 export {
   ProtocolVersion,
   DIRECT_DEVICE_INDEX,

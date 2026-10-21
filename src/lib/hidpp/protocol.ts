@@ -103,16 +103,16 @@ export async function callV20(
 
   const response = await channel.sendRaw(reportId, data, predicate);
   if (response.data[1] === HIDPP10_ERROR_SUB_ID) {
-    const code = response.data[4] ?? 0;
-    throw new HidppError(
-      `receiver rejected the request (HID++ 1.0 error 0x${code.toString(16).padStart(2, "0")})`,
-    );
+    throw new HidppError("receiver rejected the request", {
+      code: response.data[4] ?? 0,
+      protocol: "v1.0",
+    });
   }
   if (response.data[1] === ERROR_FEATURE_INDEX) {
-    throw new HidppError(
-      "HID++ feature returned an error",
-      response.data[4] ?? 0,
-    );
+    throw new HidppError("HID++ feature returned an error", {
+      code: response.data[4] ?? 0,
+      protocol: "v2.0",
+    });
   }
   return response;
 }
