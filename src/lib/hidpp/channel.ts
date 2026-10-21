@@ -31,7 +31,7 @@ interface Pending {
   predicate: (report: RawReport) => boolean;
   resolve: (report: RawReport) => void;
   reject: (error: Error) => void;
-  timer: ReturnType<typeof setTimeout>;
+  timer: ReturnType<typeof setTimeout> | undefined;
 }
 
 /**
@@ -65,6 +65,8 @@ export class HidppChannel {
   supportsLong = false;
 
   #pending: Pending[] = [];
+  /** Tail of the request queue; requests run one at a time, as receivers drop or reject pipelined ones. */
+  #queue: Promise<unknown> = Promise.resolve();
   #listeners = new Set<ReportListener>();
   #swId = 0x01;
   #rotateSwId = true;
@@ -136,7 +138,8 @@ export class HidppChannel {
 
   /**
    * Writes a report and resolves with the first incoming report that satisfies
-   * `predicate`, or rejects on timeout / write failure.
+   * `predicate`, or rejects on timeout / write failure. Requests are serialized
+   * per channel, and `timeoutMs` counts from the completed write, not from enqueue.
    */
   sendRaw(
     reportId: number,
@@ -144,25 +147,44 @@ export class HidppChannel {
     predicate: (report: RawReport) => boolean,
     timeoutMs = SEND_TIMEOUT_MS,
   ): Promise<RawReport> {
-    let entry!: Pending;
-    const result = new Promise<RawReport>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.#removePending(entry);
-        reject(new HidppError("request timed out before the device responded"));
-      }, timeoutMs);
-      entry = { predicate, resolve, reject, timer };
-      this.#pending.push(entry);
-    });
+    const run = () => this.#request(reportId, data, predicate, timeoutMs);
+    const result = this.#queue.then(run, run);
+    this.#queue = result.catch(() => undefined);
+    return result;
+  }
 
-    return this.device
-      .sendReport(reportId, data)
-      .then(() => result)
-      .catch((cause: unknown) => {
-        clearTimeout(entry.timer);
+  async #request(
+    reportId: number,
+    data: Uint8Array<ArrayBuffer>,
+    predicate: (report: RawReport) => boolean,
+    timeoutMs: number,
+  ): Promise<RawReport> {
+    let entry!: Pending;
+    const response = new Promise<RawReport>((resolve, reject) => {
+      entry = { predicate, resolve, reject, timer: undefined };
+    });
+    // Registered before the write: the reply's input event may be dispatched
+    // before the `sendReport` promise settles.
+    this.#pending.push(entry);
+
+    try {
+      await this.device.sendReport(reportId, data);
+    } catch (cause: unknown) {
+      this.#removePending(entry);
+      entry.reject(
+        new HidppError(`failed to write HID++ report: ${String(cause)}`),
+      );
+    }
+
+    if (this.#pending.includes(entry)) {
+      entry.timer = setTimeout(() => {
         this.#removePending(entry);
-        if (cause instanceof HidppError) throw cause;
-        throw new HidppError(`failed to write HID++ report: ${String(cause)}`);
-      });
+        entry.reject(
+          new HidppError("request timed out before the device responded"),
+        );
+      }, timeoutMs);
+    }
+    return response;
   }
 
   #removePending(entry: Pending): void {

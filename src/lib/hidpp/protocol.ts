@@ -39,6 +39,8 @@ export interface VersionInfo {
 export const DIRECT_DEVICE_INDEX = 0xff;
 
 const ERROR_FEATURE_INDEX = 0xff;
+/** HID++ 1.0 error sub-id, used by a receiver rejecting a request on behalf of a paired device. */
+const HIDPP10_ERROR_SUB_ID = 0x8f;
 
 /** Pads a response's payload (everything after the 3-byte header) to a 16-byte array. */
 export function extendPayload(report: RawReport): Uint8Array {
@@ -50,7 +52,9 @@ export function extendPayload(report: RawReport): Uint8Array {
 /**
  * Sends a HID++ 2.0 request and resolves with the raw matching response.
  *
- * Throws {@link HidppError} if the device returns an error response. When the
+ * Throws {@link HidppError} if the device returns an error response, or if the
+ * receiver rejects the request in HID++ 1.0 form (busy, device unreachable…).
+ * When the
  * device exposes only the long report (e.g. a BLE-direct mouse), an outgoing
  * short request is re-framed as long — the header sits at the same offsets.
  */
@@ -90,13 +94,20 @@ export async function callV20(
     const error =
       payload.length >= 5 &&
       payload[0] === deviceIndex &&
-      payload[1] === ERROR_FEATURE_INDEX &&
+      (payload[1] === ERROR_FEATURE_INDEX ||
+        payload[1] === HIDPP10_ERROR_SUB_ID) &&
       payload[2] === featureIndex &&
       payload[3] === header2;
     return normal || error;
   };
 
   const response = await channel.sendRaw(reportId, data, predicate);
+  if (response.data[1] === HIDPP10_ERROR_SUB_ID) {
+    const code = response.data[4] ?? 0;
+    throw new HidppError(
+      `receiver rejected the request (HID++ 1.0 error 0x${code.toString(16).padStart(2, "0")})`,
+    );
+  }
   if (response.data[1] === ERROR_FEATURE_INDEX) {
     throw new HidppError(
       "HID++ feature returned an error",
