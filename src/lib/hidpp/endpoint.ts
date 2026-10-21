@@ -1,5 +1,5 @@
 import type { HidppChannel, RawReport } from "./channel";
-import { callV20, extendPayload } from "./protocol";
+import { callV20, extendPayload, notifyV20 } from "./protocol";
 
 /**
  * A feature's addressable `(device, feature)` endpoint on a channel.
@@ -37,6 +37,17 @@ export class Endpoint {
   /** Calls `functionId` with a 3-byte short payload; returns the response payload padded to 16 bytes. */
   async call(functionId: number, args: readonly number[]): Promise<Uint8Array> {
     return extendPayload(await this.callRaw(functionId, args));
+  }
+
+  /** Sends `functionId` with a 3-byte short payload, expecting no reply. */
+  notify(functionId: number, args: readonly number[]): Promise<void> {
+    return notifyV20(
+      this.#channel,
+      this.#deviceIndex,
+      this.#featureIndex,
+      functionId,
+      Uint8Array.from(args),
+    );
   }
 
   /** Calls `functionId` with a 16-byte long payload; returns the response payload padded to 16 bytes. */

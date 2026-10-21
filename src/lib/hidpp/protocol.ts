@@ -49,23 +49,15 @@ export function extendPayload(report: RawReport): Uint8Array {
   return extended;
 }
 
-/**
- * Sends a HID++ 2.0 request and resolves with the raw matching response.
- *
- * Throws {@link HidppError} if the device returns an error response, or if the
- * receiver rejects the request in HID++ 1.0 form (busy, device unreachable…).
- * When the
- * device exposes only the long report (e.g. a BLE-direct mouse), an outgoing
- * short request is re-framed as long — the header sits at the same offsets.
- */
-export async function callV20(
+/** Frames a HID++ 2.0 request, up-converting short to long on long-only transports. */
+function frameV20(
   channel: HidppChannel,
   deviceIndex: number,
   featureIndex: number,
   functionId: number,
   args: Uint8Array,
   long: boolean,
-): Promise<RawReport> {
+): { reportId: number; data: Uint8Array<ArrayBuffer>; header2: number } {
   const softwareId = channel.nextSwId();
   const header2 = ((functionId & 0x0f) << 4) | (softwareId & 0x0f);
   const useLong = long || (!channel.supportsShort && channel.supportsLong);
@@ -83,6 +75,33 @@ export async function callV20(
   data[1] = featureIndex;
   data[2] = header2;
   data.set(args.subarray(0, useLong ? 16 : 3), 3);
+  return { reportId, data, header2 };
+}
+
+/**
+ * Sends a HID++ 2.0 request and resolves with the raw matching response.
+ *
+ * Throws {@link HidppError} if the device returns an error response, or if the
+ * receiver rejects the request in HID++ 1.0 form (busy, device unreachable…).
+ * When the device exposes only the long report (e.g. a BLE-direct mouse), an
+ * outgoing short request is re-framed as long — the header sits at the same offsets.
+ */
+export async function callV20(
+  channel: HidppChannel,
+  deviceIndex: number,
+  featureIndex: number,
+  functionId: number,
+  args: Uint8Array,
+  long: boolean,
+): Promise<RawReport> {
+  const { reportId, data, header2 } = frameV20(
+    channel,
+    deviceIndex,
+    featureIndex,
+    functionId,
+    args,
+    long,
+  );
 
   const predicate = (report: RawReport): boolean => {
     const payload = report.data;
@@ -115,6 +134,25 @@ export async function callV20(
     });
   }
   return response;
+}
+
+/** Sends a HID++ 2.0 request without waiting for a reply, for calls the device does not answer. */
+export async function notifyV20(
+  channel: HidppChannel,
+  deviceIndex: number,
+  featureIndex: number,
+  functionId: number,
+  args: Uint8Array,
+): Promise<void> {
+  const { reportId, data } = frameV20(
+    channel,
+    deviceIndex,
+    featureIndex,
+    functionId,
+    args,
+    false,
+  );
+  await channel.send(reportId, data);
 }
 
 /**

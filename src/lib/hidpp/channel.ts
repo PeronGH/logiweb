@@ -147,10 +147,28 @@ export class HidppChannel {
     predicate: (report: RawReport) => boolean,
     timeoutMs = SEND_TIMEOUT_MS,
   ): Promise<RawReport> {
-    const run = () => this.#request(reportId, data, predicate, timeoutMs);
-    const result = this.#queue.then(run, run);
+    return this.#enqueue(() =>
+      this.#request(reportId, data, predicate, timeoutMs),
+    );
+  }
+
+  /** Writes a report that gets no reply, in turn with queued requests. */
+  send(reportId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
+    return this.#enqueue(() => this.#write(reportId, data));
+  }
+
+  #enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const result = this.#queue.then(task, task);
     this.#queue = result.catch(() => undefined);
     return result;
+  }
+
+  async #write(reportId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
+    try {
+      await this.device.sendReport(reportId, data);
+    } catch (cause: unknown) {
+      throw new HidppError(`failed to write HID++ report: ${String(cause)}`);
+    }
   }
 
   async #request(
@@ -168,12 +186,10 @@ export class HidppChannel {
     this.#pending.push(entry);
 
     try {
-      await this.device.sendReport(reportId, data);
+      await this.#write(reportId, data);
     } catch (cause: unknown) {
       this.#removePending(entry);
-      entry.reject(
-        new HidppError(`failed to write HID++ report: ${String(cause)}`),
-      );
+      entry.reject(cause as Error);
     }
 
     if (this.#pending.includes(entry)) {

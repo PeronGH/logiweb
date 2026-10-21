@@ -2,6 +2,7 @@
   import Unlink from "@lucide/svelte/icons/unlink";
   import {
     AdjustableDpiFeature,
+    DeviceFriendlyNameFeature,
     DeviceInformationFeature,
     ExtendedReportRateFeature,
     FnInversionFeature,
@@ -21,6 +22,7 @@
   import DpiPanel from "./panels/DpiPanel.svelte";
   import ExtendedReportRatePanel from "./panels/ExtendedReportRatePanel.svelte";
   import HiResWheelPanel from "./panels/HiResWheelPanel.svelte";
+  import FriendlyNamePanel from "./panels/FriendlyNamePanel.svelte";
   import FnInversionPanel from "./panels/FnInversionPanel.svelte";
   import HostsPanel from "./panels/HostsPanel.svelte";
   import ReportRatePanel from "./panels/ReportRatePanel.svelte";
@@ -83,6 +85,9 @@
     {/if}
     {#if device.supports(ReprogControlsFeature)}
       <ButtonsPanel {device} />
+    {/if}
+    {#if device.supports(DeviceFriendlyNameFeature)}
+      <FriendlyNamePanel {device} />
     {/if}
     {#if device.supports(DeviceInformationFeature)}
       <DeviceInfoPanel {device} />

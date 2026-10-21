@@ -72,6 +72,11 @@ export {
 export { ReportRateFeature } from "./features/report-rate";
 export { ExtendedReportRateFeature } from "./features/extended-report-rate";
 export { FnInversionFeature } from "./features/fn-inversion";
+export { ChangeHostFeature, type ChangeHostInfo } from "./features/change-host";
+export {
+  DeviceFriendlyNameFeature,
+  type FriendlyNameLengths,
+} from "./features/friendly-name";
 export {
   HostsInfoFeature,
   type HostsInfo,
